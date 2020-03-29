@@ -5,7 +5,7 @@ fetch(servicesRequest)
 .then(function(serviceList) {
   serviceList.forEach(service => {
     var li = document.createElement("li");
-    li.appendChild(document.createTextNode(service.url + ': ' + service.status));
+    li.appendChild(document.createTextNode(service.url + ' ' + service.name + ': ' + service.status));
     var button = document.createElement('BUTTON')
     button.appendChild(document.createTextNode('Delete'))
     addDeleteOnClick(button, service.url)
@@ -16,14 +16,15 @@ fetch(servicesRequest)
 
 const saveButton = document.querySelector('#post-service');
 saveButton.onclick = evt => {
-    let urlName = document.querySelector('#url-name').value;
+    let url = document.querySelector('#url').value;
+    let name = document.querySelector('#name').value;
     fetch('/service', {
     method: 'post',
     headers: {
       'Accept': 'application/json, text/plain, */*',
       'Content-Type': 'application/json'
     },
-  body: JSON.stringify({url:urlName})
+  body: JSON.stringify({url:url,name:name})
 }).then(res=> location.reload());
 }
 

@@ -9,7 +9,12 @@ public class DBMigration {
     Vertx vertx = Vertx.vertx();
     DBConnector connector = new DBConnector(vertx);
     //TODO add UNIQUE constraint
-    connector.query("CREATE TABLE IF NOT EXISTS service (url VARCHAR(128) NOT NULL)").setHandler(done -> {
+    connector.query("CREATE TABLE IF NOT EXISTS service (" +
+            "url VARCHAR(128) NOT NULL, " +
+            "name VARCHAR(128) NOT NULL, " +
+            //TODO change to datetime
+            "added VARCHAR(32) NOT NULL)")
+     .setHandler(done -> {
       if(done.succeeded()){
         System.out.println("completed db migrations");
       } else {

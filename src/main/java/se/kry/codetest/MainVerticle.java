@@ -8,13 +8,17 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class MainVerticle extends AbstractVerticle {
 
-  private HashMap<String, Status> services = new HashMap<>();
+  private Map<String,Service> services = new HashMap<>();
   private ServiceRepository serviceRepository;
   private BackgroundPoller poller = new BackgroundPoller();
 
@@ -24,9 +28,9 @@ public class MainVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
 
-    serviceRepository.getServices().forEach(service -> services.put(service, Status.UNKNOWN));
+    setServices(serviceRepository.getServices());
 
-    vertx.setPeriodic(1000 * 60, timerId -> poller.pollServices(services));
+    vertx.setPeriodic(1000 * 60, timerId -> poller.pollServices(new ArrayList<>(services.values())));
     setRoutes(router);
     vertx
         .createHttpServer()
@@ -43,28 +47,35 @@ public class MainVerticle extends AbstractVerticle {
 
   private void setRoutes(Router router){
     router.route("/*").handler(StaticHandler.create());
+    // list services
     router.get("/service").handler(req -> {
       List<JsonObject> jsonServices = services
-          .entrySet()
+          .values()
           .stream()
           .map(service ->
               new JsonObject()
-                  .put("url", service.getKey())
-                  .put("status", service.getValue()))
+                  .put("url", service.getUrl())
+                  .put("name", service.getName())
+                  .put("status", service.getStatus()))
           .collect(Collectors.toList());
       req.response()
           .putHeader("content-type", "application/json")
           .end(new JsonArray(jsonServices).encode());
     });
+    // add service
     router.post("/service").handler(req -> {
       JsonObject jsonBody = req.getBodyAsJson();
-      String url = jsonBody.getString("url");
-      services.put(url, Status.UNKNOWN);
-      serviceRepository.addService(url);
+      Service service = new Service(
+              jsonBody.getString("url"),
+              jsonBody.getString("name"),
+              ZonedDateTime.now());
+      services.put(service.getUrl(), service);
+      serviceRepository.addService(service);
       req.response()
           .putHeader("content-type", "text/plain")
           .end("OK");
     });
+    // delete service
     router.delete("/service").handler(req -> {
       JsonObject jsonBody = req.getBodyAsJson();
       String url = jsonBody.getString("url");
@@ -74,6 +85,10 @@ public class MainVerticle extends AbstractVerticle {
               .putHeader("content-type", "text/plain")
               .end("OK");
     });
+  }
+
+  private void setServices(List<Service> services) {
+    this.services = services.stream().collect(Collectors.toMap(Service::getUrl, Function.identity()));
   }
 
 }
