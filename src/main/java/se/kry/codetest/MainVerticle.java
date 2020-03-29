@@ -14,17 +14,18 @@ import java.util.stream.Collectors;
 
 public class MainVerticle extends AbstractVerticle {
 
-  private HashMap<String, String> services = new HashMap<>();
-  //TODO use this
-  private DBConnector connector;
+  private HashMap<String, Status> services = new HashMap<>();
+  private ServiceRepository serviceRepository;
   private BackgroundPoller poller = new BackgroundPoller();
 
   @Override
   public void start(Future<Void> startFuture) {
-    connector = new DBConnector(vertx);
+    this.serviceRepository = new ServiceDBRepository(vertx);
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
-    services.put("https://www.kry.se", "UNKNOWN");
+
+    serviceRepository.getServices().forEach(service -> services.put(service, Status.UNKNOWN));
+
     vertx.setPeriodic(1000 * 60, timerId -> poller.pollServices(services));
     setRoutes(router);
     vertx
@@ -57,7 +58,7 @@ public class MainVerticle extends AbstractVerticle {
     });
     router.post("/service").handler(req -> {
       JsonObject jsonBody = req.getBodyAsJson();
-      services.put(jsonBody.getString("url"), "UNKNOWN");
+      services.put(jsonBody.getString("url"), Status.UNKNOWN);
       req.response()
           .putHeader("content-type", "text/plain")
           .end("OK");
