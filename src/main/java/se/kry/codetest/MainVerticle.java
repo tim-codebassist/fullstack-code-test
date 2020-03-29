@@ -58,7 +58,9 @@ public class MainVerticle extends AbstractVerticle {
     });
     router.post("/service").handler(req -> {
       JsonObject jsonBody = req.getBodyAsJson();
-      services.put(jsonBody.getString("url"), Status.UNKNOWN);
+      String url = jsonBody.getString("url");
+      services.put(url, Status.UNKNOWN);
+      serviceRepository.addService(url);
       req.response()
           .putHeader("content-type", "text/plain")
           .end("OK");
