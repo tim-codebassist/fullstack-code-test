@@ -35,4 +35,12 @@ public class ServiceDBRepository implements ServiceRepository {
         System.out.println("Adding service: " + url);
         connector.query("INSERT INTO service VALUES (?)", new JsonArray(singletonList(url)));
     }
+
+    @Override
+    public void deleteService(String url) {
+        System.out.println("Deleting service: " + url);
+        connector.query("DELETE FROM service WHERE url = ?", new JsonArray(singletonList(url)));
+    }
+
+
 }

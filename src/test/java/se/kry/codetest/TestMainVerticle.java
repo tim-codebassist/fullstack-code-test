@@ -21,6 +21,7 @@ public class TestMainVerticle {
     private static final int PORT = 8080;
     private static final String HOST = "::1";
     private static final String REQUEST_URI = "/service";
+    private static final JsonObject BODY = new JsonObject().put("url", "https://www.test.com");
     private WebClient webClient;
 
     @BeforeEach
@@ -45,10 +46,19 @@ public class TestMainVerticle {
     @DisplayName("Start a web server on localhost responding to POST path /service on port 8080")
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     void shouldAddService(VertxTestContext testContext) {
-        JsonObject body = new JsonObject()
-                .put("url", "https://www.test.com");
         webClient.post(PORT, HOST, REQUEST_URI)
-                .sendJson(body, response -> testContext.verify(() -> {
+                .sendJson(BODY, response -> testContext.verify(() -> {
+                    assertEquals(200, response.result().statusCode());
+                    testContext.completeNow();
+                }));
+    }
+
+    @Test
+    @DisplayName("Start a web server on localhost responding to POST path /service on port 8080")
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
+    void shouldDeleteService(VertxTestContext testContext) {
+        webClient.delete(PORT, HOST, REQUEST_URI)
+                .sendJson(BODY, response -> testContext.verify(() -> {
                     assertEquals(200, response.result().statusCode());
                     testContext.completeNow();
                 }));

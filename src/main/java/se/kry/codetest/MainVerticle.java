@@ -49,7 +49,7 @@ public class MainVerticle extends AbstractVerticle {
           .stream()
           .map(service ->
               new JsonObject()
-                  .put("name", service.getKey())
+                  .put("url", service.getKey())
                   .put("status", service.getValue()))
           .collect(Collectors.toList());
       req.response()
@@ -64,6 +64,15 @@ public class MainVerticle extends AbstractVerticle {
       req.response()
           .putHeader("content-type", "text/plain")
           .end("OK");
+    });
+    router.delete("/service").handler(req -> {
+      JsonObject jsonBody = req.getBodyAsJson();
+      String url = jsonBody.getString("url");
+      services.remove(url);
+      serviceRepository.deleteService(url);
+      req.response()
+              .putHeader("content-type", "text/plain")
+              .end("OK");
     });
   }
 
